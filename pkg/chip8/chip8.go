@@ -72,9 +72,7 @@ func (c *Chip8) Cycle() {
 		case ClearScreen:
 			for idx := range c.graphics {
 				c.graphics[idx] = 0
-
 			}
-
 		case Return:
 			
 		}
@@ -87,6 +85,5 @@ func (c *Chip8) Cycle() {
 		c.programCounter = c.opcode & AddressBitMask
 	}
 }
-
 
 //TimeStamp 25:11
