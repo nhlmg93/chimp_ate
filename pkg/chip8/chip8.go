@@ -20,8 +20,14 @@ var fontset = [...]uint8{
 }
 
 const (
-	ClearScreen uint16 = 0x00E0
-	Return      uint16 = 0x00EE
+	// clear screen
+	CLS uint16 = 0x00E0
+	// return
+	RET uint16 = 0x00EE
+	// jump to routine
+	SYS uint16 = 0x0
+	// jump
+	JP  uint16 = 0x1
 )
 
 const AddressBitMask uint16 = 0x0FFF
@@ -67,23 +73,57 @@ func (c *Chip8) Cycle() {
 
 	//0xX000 most significat byte
 	switch first := c.opcode >> 12; first {
-	case 0x0:
+	case SYS:
 		switch op := c.opcode; op {
-		case ClearScreen:
+		case CLS:
 			for idx := range c.graphics {
 				c.graphics[idx] = 0
 			}
-		case Return:
-			
+		case RET:
+			c.sp -= 1
+			c.programCounter = c.stack[c.sp]
 		}
 		c.incrementPC()
-	case 0x1:
+	case JP:
 		c.programCounter = c.opcode & AddressBitMask
 	case 0x2:
 		c.stack[c.sp] = c.programCounter
-		c.sp += 1 
+		c.sp += 1
 		c.programCounter = c.opcode & AddressBitMask
+	case 0x3:
+		var x = (c.opcode & 0x0F00) >> 8
+		var r = uint16(c.registers[x])
+		if r == (c.opcode & 0x00FF) {
+			c.incrementPC()
+		}
+		c.incrementPC()
+	case 0x4:
+		var x = (c.opcode & 0x0F00) >> 8
+		var r = uint16(c.registers[x])
+		if r != (c.opcode & 0x00FF) {
+			c.incrementPC()
+		}
+		c.incrementPC()
+
+	case 0x5:
+		var x = (c.opcode & 0x0F00) >> 8
+		var y = (c.opcode & 0x00F0) >> 4
+		var rX = uint16(c.registers[x])
+		var rY = uint16(c.registers[y])
+		if rX == rY {
+			c.incrementPC()
+		}
+		c.incrementPC()
+	case 0x9:
+		var x = (c.opcode & 0x0F00) >> 8
+		var y = (c.opcode & 0x00F0) >> 4
+		var rX = uint16(c.registers[x])
+		var rY = uint16(c.registers[y])
+		if rX != rY {
+			c.incrementPC()
+		}
+		c.incrementPC()
 	}
 }
 
-//TimeStamp 25:11
+//TimeStamp 27:35
