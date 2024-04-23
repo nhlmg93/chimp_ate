@@ -125,5 +125,3 @@ func (c *Chip8) Cycle() {
 		c.incrementPC()
 	}
 }
-
-//TimeStamp 27:35
