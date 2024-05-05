@@ -81,7 +81,7 @@ func (c *Chip8) incrementPC() {
 func (c *Chip8) Cycle() {
 	c.opcode = c.getOpcode()
 
-	switch mostSigBit := c.opcode >> 12; mostSigBit {
+	switch instruction := c.opcode >> 12; instruction {
 	case SYS:
 		switch op := c.opcode; op {
 		case CLS:
