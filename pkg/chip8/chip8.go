@@ -92,7 +92,8 @@ func (c *Chip8) Cycle() {
 		}
 		c.incrementPC()
 	case JP:
-		c.programCounter = c.opcode & AddressBitMask
+		var addr = c.opcode & AddressBitMask
+		c.programCounter = addr
 	case CALL:
 		c.callSubroutine()
 	case SE_VX_BYTE:
