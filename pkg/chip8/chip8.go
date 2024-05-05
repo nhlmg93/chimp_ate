@@ -26,8 +26,18 @@ const (
 	RET uint16 = 0x00EE
 	// jump to routine
 	SYS uint16 = 0x0
-	// jump
-	JP  uint16 = 0x1
+	// jump to location
+	JP uint16 = 0x1
+	// Call subroutine
+	CALL uint16 = 0x2
+	// skip next instruction if Vx = kk
+	SE_VX_BYTE uint16 = 0x3
+	// skip next instruction if Vx != kk
+	SNE uint16 = 0x4
+	// skip next instruction if Vx = V
+	SE_VX_VY uint16 = 0x5
+	// skip next instruction if Vx != Vy
+	SNE_VX_VY uint16 = 0x9
 )
 
 const AddressBitMask uint16 = 0x0FFF
@@ -76,52 +86,72 @@ func (c *Chip8) Cycle() {
 	case SYS:
 		switch op := c.opcode; op {
 		case CLS:
-			for idx := range c.graphics {
-				c.graphics[idx] = 0
-			}
+			c.clearScreen()
 		case RET:
-			c.sp -= 1
-			c.programCounter = c.stack[c.sp]
+			c.popStack()
 		}
 		c.incrementPC()
 	case JP:
 		c.programCounter = c.opcode & AddressBitMask
-	case 0x2:
-		c.stack[c.sp] = c.programCounter
-		c.sp += 1
-		c.programCounter = c.opcode & AddressBitMask
-	case 0x3:
-		var x = (c.opcode & 0x0F00) >> 8
-		var r = uint16(c.registers[x])
-		if r == (c.opcode & 0x00FF) {
-			c.incrementPC()
-		}
-		c.incrementPC()
-	case 0x4:
-		var x = (c.opcode & 0x0F00) >> 8
-		var r = uint16(c.registers[x])
-		if r != (c.opcode & 0x00FF) {
-			c.incrementPC()
-		}
-		c.incrementPC()
-
-	case 0x5:
-		var x = (c.opcode & 0x0F00) >> 8
-		var y = (c.opcode & 0x00F0) >> 4
-		var rX = uint16(c.registers[x])
-		var rY = uint16(c.registers[y])
-		if rX == rY {
-			c.incrementPC()
-		}
-		c.incrementPC()
-	case 0x9:
-		var x = (c.opcode & 0x0F00) >> 8
-		var y = (c.opcode & 0x00F0) >> 4
-		var rX = uint16(c.registers[x])
-		var rY = uint16(c.registers[y])
-		if rX != rY {
-			c.incrementPC()
-		}
+	case CALL:
+		c.callSubroutine()
+	case SE_VX_BYTE:
+		c.skipVxEqualByte()
+	case SNE:
+		c.skipVxNotEqualByte()
+	case SE_VX_VY:
+		c.skipVxEqualVy()
+	case SNE_VX_VY:
+		c.skipVxNotEqualVy()
+	}
+}
+func (c *Chip8) clearScreen() {
+	for idx := range c.graphics {
+		c.graphics[idx] = 0
+	}
+}
+func (c *Chip8) popStack() {
+	c.sp -= 1
+	c.programCounter = c.stack[c.sp]
+}
+func (c *Chip8) callSubroutine() {
+	c.stack[c.sp] = c.programCounter
+	c.sp += 1
+	c.programCounter = c.opcode & AddressBitMask
+}
+func (c *Chip8) skipVxEqualByte() {
+	var x = (c.opcode & 0x0F00) >> 8
+	var r = uint16(c.registers[x])
+	if r == (c.opcode & 0x00FF) {
 		c.incrementPC()
 	}
+	c.incrementPC()
+}
+func (c *Chip8) skipVxNotEqualByte() {
+	var x = (c.opcode & 0x0F00) >> 8
+	var r = uint16(c.registers[x])
+	if r != (c.opcode & 0x00FF) {
+		c.incrementPC()
+	}
+	c.incrementPC()
+}
+func (c *Chip8) skipVxEqualVy() {
+	var x = (c.opcode & 0x0F00) >> 8
+	var y = (c.opcode & 0x00F0) >> 4
+	var rX = uint16(c.registers[x])
+	var rY = uint16(c.registers[y])
+	if rX == rY {
+		c.incrementPC()
+	}
+	c.incrementPC()
+}
+func (c *Chip8) skipVxNotEqualVy() {
+	var x = (c.opcode & 0x0F00) >> 8
+	var y = (c.opcode & 0x00F0) >> 4
+	var rX = uint16(c.registers[x])
+	var rY = uint16(c.registers[y])
+	if rX != rY {
+		c.incrementPC()
+	}
+	c.incrementPC()
 }
