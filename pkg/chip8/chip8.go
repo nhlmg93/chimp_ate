@@ -81,8 +81,8 @@ func (c *Chip8) incrementPC() {
 func (c *Chip8) Cycle() {
 	c.opcode = uint16(c.memory[c.programCounter])<<8 | uint16(c.memory[c.programCounter+1])
 
-	//0xX000 most significat byte
-	switch first := c.opcode >> 12; first {
+	var mostSigBit = c.opcode >> 12
+	switch first := mostSigBit; first {
 	case SYS:
 		switch op := c.opcode; op {
 		case CLS:
