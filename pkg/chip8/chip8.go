@@ -36,8 +36,13 @@ const (
 	SNE uint16 = 0x4
 	// skip next instruction if Vx = V
 	SE_VX_VY uint16 = 0x5
+	//Set Vx = kk
+	LD_VX_BYTE = 0x6
+	//Set Vx = Vx + kk
+	ADD_VX_BYTE = 0x7
 	// skip next instruction if Vx != Vy
 	SNE_VX_VY uint16 = 0x9
+	//
 )
 
 const AddressBitMask uint16 = 0x0FFF
@@ -101,10 +106,30 @@ func (c *Chip8) Cycle() {
 		c.skipVxNotEqualByte()
 	case SE_VX_VY:
 		c.skipVxEqualVy()
+	case LD_VX_BYTE:
+		c.loadVxBytes()
+	case ADD_VX_BYTE:
+		c.addVxBytes()
+	case 0x8:
+		var x = (c.opcode & 0x0F00) >> 8
+		var y = (c.opcode & 0x00F0) >> 4
+		switch mode := c.opcode & 0x00F; mode {
+		case 0:
+			c.registers[x] = c.registers[y]
+		case 1:
+			c.registers[x] |= c.registers[y]
+		case 2:
+			c.registers[x] &= c.registers[y]
+		case 3:
+			c.registers[x] ^= c.registers[y]
+		}
+		c.incrementPC()
+
 	case SNE_VX_VY:
 		c.skipVxNotEqualVy()
 	}
 }
+
 func (c *Chip8) getOpcode() uint16 {
 	return uint16(c.memory[c.programCounter])<<8 | uint16(c.memory[c.programCounter+1])
 }
@@ -156,5 +181,15 @@ func (c *Chip8) skipVxNotEqualVy() {
 	if rX != rY {
 		c.incrementPC()
 	}
+	c.incrementPC()
+}
+func (c *Chip8) loadVxBytes() {
+	var x = (c.opcode & 0x0F00) >> 8
+	c.registers[x] = uint8(c.opcode & 0x00FF)
+	c.incrementPC()
+}
+func (c *Chip8) addVxBytes() {
+	var x = (c.opcode & 0x0F00) >> 8
+	c.registers[x] += uint8(c.opcode & 0x00FF)
 	c.incrementPC()
 }
