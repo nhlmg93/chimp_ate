@@ -42,7 +42,6 @@ const (
 	ADD_VX_BYTE = 0x7
 	// skip next instruction if Vx != Vy
 	SNE_VX_VY uint16 = 0x9
-	//
 )
 
 const AddressBitMask uint16 = 0x0FFF
@@ -122,6 +121,46 @@ func (c *Chip8) Cycle() {
 			c.registers[x] &= c.registers[y]
 		case 3:
 			c.registers[x] ^= c.registers[y]
+		case 4:
+			var sum uint16 = uint16(c.registers[x])
+			sum += uint16(c.registers[y])
+			if sum > 255 {
+				c.registers[0xF] = 1
+			} else {
+				c.registers[0xF] = 0
+			}
+			c.registers[x] = uint8(sum & 0x00FF)
+		case 5:
+			if c.registers[x] > c.registers[y] {
+				c.registers[0xF] = 1
+			} else {
+
+				c.registers[0xF] = 0
+			}
+			c.registers[x] -= c.registers[y]
+		case 6:
+			if c.registers[x]&1 != 0 {
+				c.registers[0xF] = 1
+			} else {
+				c.registers[0xF] = 0
+			}
+			c.registers[x] = c.registers[x] >> 1
+		case 7:
+			if c.registers[y] > c.registers[x] {
+				c.registers[0xF] = 1
+			} else {
+
+				c.registers[0xF] = 0
+			}
+			c.registers[x] = c.registers[y] - c.registers[x]
+		case 14:
+			if c.registers[x]&0x80 != 0 {
+				c.registers[0xF] = 1
+			} else {
+				c.registers[0xF] = 0
+			}
+			c.registers[x] = c.registers[x] >> 1
+
 		}
 		c.incrementPC()
 
