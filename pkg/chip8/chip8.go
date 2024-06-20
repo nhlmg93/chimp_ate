@@ -52,8 +52,8 @@ const AddressBitMask uint16 = 0x0FFF
 type Chip8 struct {
 	//0xXXXX
 	opcode         uint16
-	memory         [4096]uint8
-	graphics       [64 * 32]uint8
+	Memory         [4096]uint8
+	Graphics       [64 * 32]uint8
 	registers      [16]uint8
 	index          uint16
 	programCounter uint16
@@ -72,7 +72,7 @@ func NewChip8() *Chip8 {
 	machine.programCounter = 0x200
 
 	for idx, char := range fontset {
-		machine.memory[idx] = char
+		machine.Memory[idx] = char
 	}
 
 	return machine
@@ -80,7 +80,7 @@ func NewChip8() *Chip8 {
 
 func (c *Chip8) incrementPC() {
 	// every instruction is two bytes but
-	// can only read one byte at time via memory
+	// can only read one byte at time via Memory
 	// hence we increment pc by 2
 	c.programCounter += 2
 }
@@ -190,7 +190,7 @@ func (c *Chip8) Cycle() {
 
 		var y uint8 = 0
 		for uint16(y) < nn {
-			var pixel = c.memory[c.index+uint16(y)]
+			var pixel = c.Memory[c.index+uint16(y)]
 			var x uint8 = 0
 			for x < 8 {
 				const msb uint8 = 0x080
@@ -198,8 +198,8 @@ func (c *Chip8) Cycle() {
 					var tX = (regX + x) % 64
 					var tY = (regY + y) % 32
 					var idx = tX + tY*64
-					c.graphics[idx] ^= 1
-					if c.graphics[idx] == 0 {
+					c.Graphics[idx] ^= 1
+					if c.Graphics[idx] == 0 {
 						c.registers[0xF] = 1
 
 					}
@@ -250,18 +250,18 @@ func (c *Chip8) Cycle() {
 		} else if kk == 0x29 {
 			c.index = uint16(c.registers[x]) * 0x5
 		} else if kk == 0x33 {
-			c.memory[c.index] = c.registers[x] / 100
-			c.memory[c.index+1] = (c.registers[x] / 10) % 10
-			c.memory[c.index+2] = c.registers[x] % 10
+			c.Memory[c.index] = c.registers[x] / 100
+			c.Memory[c.index+1] = (c.registers[x] / 10) % 10
+			c.Memory[c.index+2] = c.registers[x] % 10
 		} else if kk == 0x55 {
 			var i uint16 = 0
 			for ; i <= x; i++ {
-				c.memory[c.index+i] = c.registers[i]
+				c.Memory[c.index+i] = c.registers[i]
 			}
 		} else if kk == 0x65 {
 			var i uint16 = 0
 			for ; i <= x; i++ {
-				c.registers[i] = c.memory[c.index+i]
+				c.registers[i] = c.Memory[c.index+i]
 			}
 		}
 
@@ -270,11 +270,11 @@ func (c *Chip8) Cycle() {
 }
 
 func (c *Chip8) getOpcode() uint16 {
-	return uint16(c.memory[c.programCounter])<<8 | uint16(c.memory[c.programCounter+1])
+	return uint16(c.Memory[c.programCounter])<<8 | uint16(c.Memory[c.programCounter+1])
 }
 func (c *Chip8) clearScreen() {
-	for idx := range c.graphics {
-		c.graphics[idx] = 0
+	for idx := range c.Graphics {
+		c.Graphics[idx] = 0
 	}
 }
 func (c *Chip8) popStack() {
