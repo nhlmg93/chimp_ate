@@ -1,5 +1,7 @@
 package chip8
 
+import "math/rand"
+
 //35:16
 var fontset = [...]uint8{
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -167,6 +169,61 @@ func (c *Chip8) Cycle() {
 
 	case SNE_VX_VY:
 		c.skipVxNotEqualVy()
+	case 0xA:
+		c.index = c.opcode & 0x0FFF
+		c.incrementPC()
+	case 0xB:
+		c.programCounter = (c.opcode & 0x0FFF) + uint16(c.registers[0])
+	case 0xC:
+		var x = (c.opcode & 0x0F00) >> 8
+		var kk = c.opcode & 0x00FF
+		c.registers[x] = uint8(uint16(rand.Intn(100)) & kk)
+		c.incrementPC()
+	case 0xD:
+		c.registers[0xF] = 0
+		var xx = (c.opcode & 0x0F00) >> 8
+		var yy = (c.opcode & 0x00F0) >> 4
+		var nn = c.opcode & 0x000F
+
+		var regX = c.registers[xx]
+		var regY = c.registers[yy]
+
+		var y uint8 = 0
+		for uint16(y) < nn {
+			var pixel = c.memory[c.index+uint16(y)]
+			var x uint8 = 0
+			for x < 8 {
+				const msb uint8 = 0x080
+				if pixel&(msb>>x) != 0 {
+					var tX = (regX + x) % 64
+					var tY = (regY + y) % 32
+					var idx = tX + tY*64
+					c.graphics[idx] ^= 1
+					if c.graphics[idx] == 0 {
+						c.registers[0xF] = 1
+
+					}
+				}
+
+				x += 1
+			}
+			y += 1
+		}
+		c.incrementPC()
+	case 0xE:
+		var x = (c.opcode & 0x0F00) >> 8
+		var kk = c.opcode & 0x00FF
+
+		if kk == 0x9E {
+			if c.keys[c.registers[x]] == 1 {
+				c.incrementPC()
+			}
+		} else if kk == 0xA1 {
+			if c.keys[c.registers[x]] != 1 {
+				c.incrementPC()
+			}
+		}
+		c.incrementPC()
 	}
 }
 
