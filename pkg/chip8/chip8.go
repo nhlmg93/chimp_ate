@@ -2,7 +2,7 @@ package chip8
 
 import "math/rand"
 
-//35:16
+//44:20
 var fontset = [...]uint8{
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 	0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -223,6 +223,48 @@ func (c *Chip8) Cycle() {
 				c.incrementPC()
 			}
 		}
+		c.incrementPC()
+	case 0xF:
+		var x = (c.opcode & 0x0F00) >> 8
+		var kk = c.opcode & 0x00FF
+		if kk == 0x07 {
+			c.registers[x] = c.delayTimer
+		} else if kk == 0x0A {
+			var key_pressed = false
+			for i := 0; i < len(c.keys); i++ {
+				if c.keys[i] != 0 {
+					c.registers[x] = uint8(i)
+					key_pressed = true
+					break
+				}
+			}
+			if !key_pressed {
+				return
+			}
+		} else if kk == 0x15 {
+			c.delayTimer = c.registers[x]
+		} else if kk == 0x18 {
+			c.delayTimer = c.registers[x]
+		} else if kk == 0x1E {
+			c.index += uint16(c.registers[x])
+		} else if kk == 0x29 {
+			c.index = uint16(c.registers[x]) * 0x5
+		} else if kk == 0x33 {
+			c.memory[c.index] = c.registers[x] / 100
+			c.memory[c.index+1] = (c.registers[x] / 10) % 10
+			c.memory[c.index+2] = c.registers[x] % 10
+		} else if kk == 0x55 {
+			var i uint16 = 0
+			for ; i <= x; i++ {
+				c.memory[c.index+i] = c.registers[i]
+			}
+		} else if kk == 0x65 {
+			var i uint16 = 0
+			for ; i <= x; i++ {
+				c.registers[i] = c.memory[c.index+i]
+			}
+		}
+
 		c.incrementPC()
 	}
 }
