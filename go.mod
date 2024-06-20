@@ -1,4 +1,4 @@
-module github.com/nhlmg93/chimp_ate
+module github.com/nhlmg93/chip_8
 
 go 1.21.6
 

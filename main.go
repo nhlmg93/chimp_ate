@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
-	chip8 "github.com/nhlmg93/chimp_ate/pkg/chip8"
+	chip8 "github.com/nhlmg93/chip_8/pkg/chip8"
 )
 
 func loadROM(chip *chip8.Chip8) {
